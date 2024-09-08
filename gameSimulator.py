@@ -160,10 +160,41 @@ class GameSimulator:
          self.spdCoefOff = 10*random.random()
          self.spdCoefDef = 10*random.random()
     
-   def GetScoreAndProbability(self, o1, d1, o2, d2, homeField):
+   def GetScoreAndProbability(self, o1, d1, o2, d2, homeField, dO1=None, dD1=None, dO2=None, dD2=None):
       # Return the average score and probability expected for the given power and home field.
 
       results = self.GetScores(o1, d1, o2, d2, homeField)
+      results["scoreRms"] = self.spreadRms # rmsFactor
+      spread = results["score1"] - results["score2"]
+      prob = 0.5*(1+special.erf(spread/self.spreadRms/math.sqrt(2)))
+      results["probability"] = prob
+
+      # Estimate the variation in the spread from the uncertainty in the powers.
+      if (dO1 != None):
+         resultsEach = []
+         spreadAverage = 0
+         probAverage = 0
+         for iO1 in range(-1,2,1):
+            thisO1 = o1 + iO1*dO1
+            for iD1 in range(-1,2,1):
+               thisD1 = d1 + iD1*dD1
+               for iO2 in range(-1,2,1):
+                  thisO2 = o2 + iO2*dO2
+                  for iD2 in range(-1,2,1):
+                     thisD2 = d2 + iD2*dD2
+                     thisResult = self.GetScores(thisO1, thisD1, thisO2, thisD2, homeField)
+                     resultsEach.append(thisResult)
+                     spreadAverage += thisResult["score1"] - thisResult["score2"]
+         spreadAverage /= len(resultsEach)
+         spreadRms = 0
+         for iEach in range(len(resultsEach)):
+            spreadDiff = spreadAverage - (resultsEach[iEach]["score2"] - resultsEach[iEach]["score1"])
+            spreadRms += spreadDiff*spreadDiff
+         spreadRms = math.sqrt(spreadRms/len(resultsEach))
+         totalSpreadRms = math.sqrt(self.spreadRms*self.spreadRms+spreadRms*spreadRms)
+         results["scoreRms"] = totalSpreadRms
+         prob2 = 0.5*(1+special.erf(spread/totalSpreadRms/math.sqrt(2)))
+         results["probability"] = prob2
 
       #rms = self.rmsCoef0 + (o1+o2)*self.rmsCoefOff + (d1+d2)*self.rmsCoefDef
       # See checkSpreadVsProb.csv which has several years of predictions from 65-75% and average spread is (was 13.4 if only couting wins but dropped to 7 after counting all games forcast to average 70% win) 7.
@@ -174,10 +205,7 @@ class GameSimulator:
       # lets go with 14 as that is what the theoretical spread RMS has been.
       #rms = self.rmsCoef0 + (o1+o2)*self.rmsCoefOff + (d1+d2)*self.rmsCoefDef
       #rmsFactor = 14
-      spread = results["score1"] - results["score2"]
-      prob = 0.5*(1+special.erf(spread/self.spreadRms/math.sqrt(2)))
-      results["probability"] = prob
-      results["scoreRms"] = self.spreadRms # rmsFactor
+
       return results
     
    def GetScores(self, o1, d1, o2, d2, homeField, verbose=False):

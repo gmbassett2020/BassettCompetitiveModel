@@ -166,5 +166,5 @@ class Team:
    def GetHomeField(self, year, roundName):
       if (self.homeField.get(year) == None):
          return None
-      return self.schedule[year].get(roundName)
-        
+      return self.homeField[year].get(roundName)
+

@@ -80,6 +80,21 @@ class GameSeason:
 
       return power
       
+   def GetAveSeasonChange(divisionName):
+      iDiv = 0
+      if (divisionName == GameSeason.divName[1]): # "IAA"
+         iDiv = 1
+      elif (divisionName == GameSeason.divName[2]): # NFL
+         iDiv = 2
+      elif (divisionName == GameSeason.divName[3]): # NFL
+         iDiv = 3
+
+      power = {}
+      power["offense"] = GameSeason.offSeasonChange[iDiv]
+      power["defense"] = GameSeason.defSeasonChange[iDiv]
+
+      return power
+      
    def CreateSimulatedSeason(self, seasonType="NCAA2Divsions", correlatePreviousSeasonsPower=True, initializePowerFromPrevious=False, uniqueTeamNames=False):
 
       year = self.seasonYear

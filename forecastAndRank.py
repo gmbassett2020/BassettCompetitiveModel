@@ -88,6 +88,8 @@ outputFile = None
 
 fitTeamPowers = True
 
+usePowerUncertainty = False
+
 deprioritizeTotalForCost = 0.25
 
 #2023-08-08
@@ -184,6 +186,10 @@ if (len(sys.argv) > 1):
       elif (keyAndValueString[0] == "totCoef0Init"):
          totCoef0Init = float(keyAndValueString[1])
          print("Setting totCoef0Init to "+str(totCoef0Init))
+
+      elif (keyAndValueString[0] == "usePowerUncertainty"):
+         usePowerUncertainty = (keyAndValueString[1] == "True" or keyAndValueString[1] == "true")
+         print("Setting usePowerUncertainty to "+str(usePowerUncertainty))
 
       else:
          print("ERROR: unknown parameter "+keyAndValueString[0])
@@ -471,14 +477,19 @@ def GetCurrentPower(teamObject,iRound,thisGameSeason,gameCountByTeamId,currentPo
    power = {}
    if (currentPowerByTeamIdAndRound.get(teamId) == None):
       currentPowerByTeamIdAndRound[teamId] = {}
+
    if (currentPowerByTeamIdAndRound[teamId].get(iRound) == None):
       prevSeasonPower = teamObject.GetPowerActual(thisGameSeason.seasonYear-1)
+      seasonChange = gameSeason.GameSeason.GetAveSeasonChange(teamObject.GetDivisionName(year))
       if (prevSeasonPower["offense"] == None):
          prevSeasonPower = gameSeason.GameSeason.GetDefaultPower(teamObject.GetDivisionName(year))
+
+      # Find the newest round with a power.  Note that this can be a week in which the team did not play but for which a power was set.
       iRoundPrev = iRound - 1
       while (iRoundPrev >= 0 and teamObject.GetFitPower(thisGameSeason.seasonYear, thisGameSeason.roundNames[iRoundPrev]) == None):
       #while (iRoundPrev >= 0 and gameCountByTeamId[teamId]["countByRoundNumber"].get(iRoundPrev) == None):
          iRoundPrev -= 1
+
       if (iRoundPrev < 0 or gameCountByTeamId[teamId]["countByRoundNumber"].get(iRoundPrev) == None or gameCountByTeamId[teamId]["countByRoundNumber"][iRoundPrev] <= 0):
          # First game, so use the previous season's power.
          useDef = prevSeasonPower["defense"]
@@ -491,6 +502,29 @@ def GetCurrentPower(teamObject,iRound,thisGameSeason,gameCountByTeamId,currentPo
          useOff = weight*fitPower["offense"] + (1.-weight)*prevSeasonPower["offense"]
       power["offense"] = useOff
       power["defense"] = useDef
+
+      # Get the change in power between last two games.
+      # Find the last two rounds with actual games.
+      iRoundGame1 = iRound - 1
+      while (iRoundGame1 >= 0 and teamObject.GetOpponent(thisGameSeason.seasonYear, thisGameSeason.roundNames[iRoundGame1]) == None):
+         iRoundGame1 -= 1
+      if (iRoundGame1 < 0):
+         power["offenseUncertainty"] = seasonChange["offense"]
+         power["defenseUncertainty"] = seasonChange["defense"]
+      else:
+         iRoundGame2 = iRoundGame1 - 1
+         while (iRoundGame2 >= 0 and teamObject.GetOpponent(thisGameSeason.seasonYear, thisGameSeason.roundNames[iRoundGame2]) == None):
+            iRoundGame2 -= 1
+         if (iRoundGame2 < 0):
+            useDefPrev = prevSeasonPower["defense"]
+            useOffPrev = prevSeasonPower["offense"]
+         else:
+            weightPrev = gameSimulator.weekWeights[gameCountByTeamId[teamId]["countByRoundNumber"][iRoundGame2]]
+            useDefPrev = weightPrev*fitPower["defense"] + (1.-weightPrev)*prevSeasonPower["defense"]
+            useOffPrev = weightPrev*fitPower["offense"] + (1.-weightPrev)*prevSeasonPower["offense"]
+         power["offenseUncertainty"] = abs(useOff - useOffPrev)
+         power["defenseUncertainty"] = abs(useDef - useDefPrev)
+
       currentPowerByTeamIdAndRound[teamId][iRound] = power
    else:
       power = currentPowerByTeamIdAndRound[teamId][iRound]
@@ -708,7 +742,11 @@ for iRound in range(roundCount):
          power2 = GetCurrentPower(game.team2Object,iRound,thisGameSeason,gameCountByTeamId,currentPowerByTeamIdAndRound)
          useDef2 = power2["defense"]
          useOff2 = power2["offense"]
-         scoreAndProb = gameSimulator.GetScoreAndProbability(useOff1, useDef1, useOff2, useDef2, game.homeField)
+         #print(":::-1 game "+game.team1Object.teamName+" "+game.team2Object.teamName+" o1Del="+str(power1["offenseUncertainty"])+" d1Del="+str(power1["defenseUncertainty"])+" o2Del="+str(power2["offenseUncertainty"])+" d2Del="+str(power2["defenseUncertainty"]))
+         if (usePowerUncertainty):
+            scoreAndProb = gameSimulator.GetScoreAndProbability(useOff1, useDef1, useOff2, useDef2, game.homeField, power1["offenseUncertainty"], power1["defenseUncertainty"], power2["offenseUncertainty"], power2["defenseUncertainty"])
+         else:
+            scoreAndProb = gameSimulator.GetScoreAndProbability(useOff1, useDef1, useOff2, useDef2, game.homeField)
          if (iRound <= roundCount-2):
             # Results and rankings
             probability = scoreAndProb["probability"]
