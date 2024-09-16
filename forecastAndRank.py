@@ -282,7 +282,7 @@ if (useTeamListFile != None and useTeamSeasonsFile != None):
       elif (teamSeasons["HomeFlag"][gameIndex] == "team2Home"):
          homeField = 0.0
       if (thisGameSeason == None):
-         print("ERROR: unknown year in gameRow "+gameRowString)
+         print("ERROR: bad entry in seasons file (Season listed in seasons file which is not present in list file) or unknown year in gameRow "+gameRowString)
          exit(1)
       if (team1Object == None):
          print("WARNING: skipping game because of unknown Team1="+str(teamSeasons["Team1"][gameIndex])+" in gameRow "+gameRowString)
