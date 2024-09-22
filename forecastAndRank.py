@@ -78,11 +78,11 @@ useTeamSeasonsFile = "nfl-seasons-2001_2023.csv"
 #useTeamSeasonsFile = None
 teamList = None
 teamSeasons = None
-#saveTeamPowersToFile = None
+saveTeamPowersToFile = None
 # col
 #saveTeamPowersToFile = "colI-powers-2023.csv"
 # nfl
-saveTeamPowersToFile = "nfl-powers-2023.csv"
+#saveTeamPowersToFile = "nfl-powers-2023.csv"
 
 outputFile = None
 
