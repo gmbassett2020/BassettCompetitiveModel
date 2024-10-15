@@ -112,7 +112,7 @@ CLASSES
      |  offSeasonChange = [1.5770794762076497, 1.686645465207797, 1.0994463357...
 
 FILE
-    /mnt/linux4tb2024/bcm-wrk/bcm/gameSeason.py
+    gameSeason.py
 
 
 Help on module gameSimulator:
@@ -168,7 +168,7 @@ CLASSES
      |      list of weak references to the object
 
 FILE
-    /mnt/linux4tb2024/bcm-wrk/bcm/gameSimulator.py
+    gameSimulator.py
 
 
 Help on module game:
@@ -215,7 +215,7 @@ CLASSES
      |  nextGameId = 0
 
 FILE
-    /mnt/linux4tb2024/bcm-wrk/bcm/game.py
+    game.py
 
 
 Help on module team:
@@ -299,6 +299,6 @@ CLASSES
      |  teamObjectByName = {}
 
 FILE
-    /mnt/linux4tb2024/bcm-wrk/bcm/team.py
+    team.py
 
 
